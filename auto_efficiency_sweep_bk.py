@@ -28,11 +28,10 @@ def print_equipment_id():
     print(load.query('*IDN?')+'\n')
 
 
-def change_setpoints(volts,current):
+def change_setpoints(volts, current):
 
     psu.write('volt {}'.format(volts))
     load.write('curr:stat:l1 {}'.format(current))
-
 
 
 def read_input_data():
@@ -71,7 +70,7 @@ def init_supply():
 
 
 def signal_handler(signal, frame):
-    
+
     load.write('abort')
     psu.write('output off')
 
@@ -80,13 +79,13 @@ def signal_handler(signal, frame):
 
 
 print(
-'''
-======            AUTO EFFICIENCY TEST                 =======
+    '''
+    ======            AUTO EFFICIENCY TEST                 =======
 
-400W MAX (Single load module) - USING CHROMA + Keysight (OR BK)
-Settling time = {}s
-Set VISA Resource Names to:  ( ChromaLoad   &  PSU ) in NIMAX
-Parameters = Vin(min) Vin(nom) Vin(max) Load(min) Load(max) #Points current_limit'''.format(settle_time))
+    400W MAX (Single load module) - USING CHROMA + Keysight (OR BK)
+    Settling time = {}s
+    Set VISA Resource Names to:  ( ChromaLoad   &  PSU ) in NIMAX
+    Parameters = Vin(min) Vin(nom) Vin(max) Load(min) Load(max) #Points current_limit'''.format(settle_time))
 
 print('\n')
 
@@ -108,7 +107,7 @@ else:
     psu = rm.open_resource('PSU_bk')        #  < ----------------  BK Power Supply
 
 
-load = rm.open_resource('ChromaLoad2')   #  < ----------------  eLoad
+load = rm.open_resource('chroma_load2')   #  < ----------------  eLoad
 
 # ---------------------------------------------------------------------------------
 print_equipment_id()
@@ -134,11 +133,12 @@ print('Turning Supply ON')
 # Initialize PSU
 
 init_supply()
+time.sleep(2)
 
 
 # Configure E-Load for CCH
-print('Configuring Load CH1')
-load.write('chan 1')
+print('Configuring Load CH7')
+load.write('chan 7')
 load.write('mode cch')
 load.write('curr:stat:l1 0')
 load.write('load on')
@@ -147,7 +147,7 @@ load.write('load on')
 data_0 = []
 data_1 = []
 data_2 = []
-print load_currents
+
 
 for voltage in volt_setpoint:
 
@@ -209,6 +209,7 @@ plt.plot(data_max[:, 4], data_max[:, 6], \
 plt.title('Efficiency vs Load')
 plt.xlabel('Load [A]')
 plt.ylabel('Efficiency [%]')
+plt.ylim((40.0, 100.0))
 plt.grid()
 plt.legend(loc='lower right')
 
