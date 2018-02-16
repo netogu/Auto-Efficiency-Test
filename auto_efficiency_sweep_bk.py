@@ -85,7 +85,7 @@ print(
     400W MAX (Single load module) - USING CHROMA + Keysight (OR BK)
     Settling time = {}s
     Set VISA Resource Names to:  ( ChromaLoad   &  PSU ) in NIMAX
-    Parameters = Vin(min) Vin(nom) Vin(max) Load(min) Load(max) #Points current_limit'''.format(settle_time))
+    Parameters = Vin(min) Vin(nom) Vin(max) Load(min) Load(max) #Points IinOffset IoutOffset current_limit'''.format(settle_time))
 
 print('\n')
 
@@ -94,7 +94,11 @@ signal.signal(signal.SIGINT, signal_handler)
 
 volt_setpoint = [float(i) for i in args[1:4]]
 current_range = [float(i) for i in args[4:7]]
-current_limit = float(args[7])
+iin_offset = float(args[7])
+iout_offset = float(args[8])
+current_limit = float(args[9])
+
+
 x0, xn, points = current_range
 load_currents = np.linspace(x0, xn, points)
 
@@ -102,7 +106,7 @@ load_currents = np.linspace(x0, xn, points)
 
 rm = visa.ResourceManager()
 if not BK_PSU:
-    psu = rm.open_resource('PSU2')           #  < ----------------  Keysight Power Supply
+    psu = rm.open_resource('PSU')           #  < ----------------  Keysight Power Supply
 else:
     psu = rm.open_resource('PSU_bk')        #  < ----------------  BK Power Supply
 
@@ -115,6 +119,8 @@ print_equipment_id()
 
 print('The max voltage to be tested is {:.2f}V and a max load current of {:.2f}A'.format(max(volt_setpoint),max(load_currents)))
 print('The source current limit is set to {:2.2f}A'.format(current_limit))
+print('The input current offset is set to {:2.2f}mA'.format(iin_offset/1e-3))
+print('The output current offset is set to {:2.2f}mA\n'.format(iout_offset/1e-3))
 menu = raw_input('Do you want to continue? (Y/N)')
 
 if menu != 'Y':
@@ -157,8 +163,10 @@ for voltage in volt_setpoint:
         time.sleep(settle_time)
 
         vin, iin = read_input_data()
+        iin += iin_offset
         pin = vin * iin
         vout, iout = read_output_data()
+        iout += iout_offset
         pout = vout * iout
         eff = pout/(pin+0.00000001)*100
 
